@@ -1,0 +1,97 @@
+name: Deploy Helm Charts to EKS Cluster
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/deploy-helm.yaml
+  workflow_dispatch:
+
+env::
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+  NAMESPACE: retail-app
+
+jobs:
+  deploy-helm:
+    name: Deploy Helm Charts to EKS
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name ${{ env.EKS_CLUSTER_NAME }} --region ${{ env.AWS_REGION }}
+
+      - name: Install Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.13.0
+
+      - name: Create namespace
+        run: |
+          kubectl create namespace ${{ env.NAMESPACE }} || echo "Namespace '${{ env.NAMESPACE }}' already exists"
+ 
+      - name: Deploy Frontend
+        run: |
+          helm upgarde --install frontend \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart \
+            --version 1.4.0 \
+            --namespace ${{ env.NAMESPACE }} \
+            --wait \
+            --timeout 5m
+
+      - name: Deploy Catalog
+        run: |
+          helm upgrade --install catalog \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-catalog-chart \
+            --version 1.4.0 \
+            --namespace ${{ env.NAMESPACE }} \
+            --wait \
+            --timeout 5m
+
+      - name: Deploy Cart
+        run: |
+          helm upgrade --install cart \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-cart-chart \
+            --version 1.4.0 \
+            --namespace ${{ env.NAMESPACE }} \
+            --wait \
+            --timeout 5m
+
+      - name: Deploy Orders
+        run: |
+          helm upgrade --install orders \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-orders-chart \
+            --version 1.4.0 \
+            --namespace ${{ env.NAMESPACE }} \
+            --wait \
+            --timeout 5m
+
+      - name: Deploy Checkout
+        run: |
+          helm upgrade --install checkout \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-checkout-chart \
+            --version 1.4.0 \
+            --namespace ${{ env.NAMESPACE }} \
+            --wait \
+            --timeout 5m
+
+      - name: Verify Deployments
+        run: |
+          kubectl get all -n ${{ env.NAMESPACE }}
+          helm list -n ${{ env.NAMESPACE }}
+     
