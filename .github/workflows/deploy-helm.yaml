@@ -50,7 +50,8 @@ jobs:
 
       - name: Test chart pull
         run: |
-          helm pull oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart:1.4.0
+          helm pull oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart \
+            --version 1.4.0
  
       - name: Deploy Frontend
         run: |
