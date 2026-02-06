@@ -1,0 +1,103 @@
+# Workflow Name
+name: "starttech-infra"
+
+# Workflow Triggers
+on:
+  push:
+    branches:
+      - main
+    paths:  
+      - terraform/**
+  workflow_dispatch: # Enables manual trigger for destroy job
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  S3_BUCKET: ${{ secrets.S3_BUCKET }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+ # Define jobs 
+jobs:
+  terraform:
+    name: "Deploy Infra with Terraform on AWS"
+    runs-on: ubuntu-latest
+    # Run only on push events
+    if: github.event_name == 'push'
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Format
+        id: fmt
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform init
+        id: init
+        run: terraform init -backend-config="bucket=$S3_BUCKET"
+
+      - name: Terraform validate
+        id: validate
+        run: terraform validate
+
+      - name: Terraform plan
+        id: plan
+        run: terraform plan -out=tfplan -input=false -out planfile
+        continue-on-error: false
+
+      - name: Terraform plan status
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
+
+      - name: Terraform apply
+        id: apply
+        run: terraform apply --auto-approve -input=false -parallelism=1 planfile
+
+  destroy:
+    name: "Destroy Infra with Terraform on AWS"
+    runs-on: ubuntu-latest
+    # Run only on workflow_dispatch events
+    if: github.event_name == 'workflow_dispatch'
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./terraform
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Terraform init
+        id: init
+        run: terraform init -backend-config="bucket=$S3_BUCKET"
+
+      - name: Terraform destroy
+        id: destroy
+        run: terraform destroy --auto-approve -input=false
