@@ -1,5 +1,5 @@
 # Workflow Name
-name: "starttech-infra"
+name: "bedrock-infra"
 
 # Workflow Triggers
 on:
