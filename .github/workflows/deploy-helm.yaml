@@ -58,7 +58,7 @@ jobs:
       - name: Deploy Frontend
         run: |
           helm upgrade --install frontend \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-ui \
             --version 1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
@@ -67,7 +67,7 @@ jobs:
       - name: Deploy Catalog
         run: |
           helm upgrade --install catalog \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-catalog-chart \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-catalog \
             --version 1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
@@ -76,7 +76,7 @@ jobs:
       - name: Deploy Cart
         run: |
           helm upgrade --install cart \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-cart-chart \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-cart \
             --version 1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
@@ -85,7 +85,7 @@ jobs:
       - name: Deploy Orders
         run: |
           helm upgrade --install orders \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-orders-chart \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-orders \
             --version 1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
@@ -94,7 +94,7 @@ jobs:
       - name: Deploy Checkout
         run: |
           helm upgrade --install checkout \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-checkout-chart \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-checkout \
             --version 1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
