@@ -51,8 +51,7 @@ jobs:
       - name: Deploy Frontend
         run: |
           helm upgrade --install frontend \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart \
-            --version 1.4.0 \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart:1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
             --timeout 5m
@@ -60,8 +59,7 @@ jobs:
       - name: Deploy Catalog
         run: |
           helm upgrade --install catalog \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-catalog-chart \
-            --version 1.4.0 \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-catalog-chart:1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
             --timeout 5m
@@ -69,8 +67,7 @@ jobs:
       - name: Deploy Cart
         run: |
           helm upgrade --install cart \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-cart-chart \
-            --version 1.4.0 \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-cart-chart:1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
             --timeout 5m
@@ -78,8 +75,7 @@ jobs:
       - name: Deploy Orders
         run: |
           helm upgrade --install orders \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-orders-chart \
-            --version 1.4.0 \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-orders-chart:1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
             --timeout 5m
@@ -87,8 +83,7 @@ jobs:
       - name: Deploy Checkout
         run: |
           helm upgrade --install checkout \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-checkout-chart \
-            --version 1.4.0 \
+            oci://public.ecr.aws/aws-containers/retail-store-sample-checkout-chart:1.4.0 \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
             --timeout 5m
