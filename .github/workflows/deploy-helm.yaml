@@ -57,9 +57,10 @@ jobs:
  
       - name: Deploy Frontend
         run: |
+          helm pull oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart --version 1.4.0
+          tar -xzf retail-store-sample-ui-chart-1.4.0.tgz
           helm upgrade --install frontend \
-            oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart \
-            --version 1.4.0 \
+            ./retail-store-sample-ui-chart \
             --namespace ${{ env.NAMESPACE }} \
             --wait \
             --timeout 5m
