@@ -19,5 +19,5 @@ variable "project_name" {
 variable "instance_type" {
   description = "The EC2 instance type to use for EKS worker nodes."
   type        = list(string)
-  default     = ["t3.micro"]
+  default     = ["t3.small"]
 }
