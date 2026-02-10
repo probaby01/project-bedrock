@@ -1,3 +1,6 @@
+# modules/eks/main.tf
+
+# CloudWatch Log Group for EKS Control Plane
 resource "aws_cloudwatch_log_group" "eks_cluster_cwlg" {
   name              = "/${var.project_name}/cluster-logs"
   retention_in_days = 7
@@ -5,8 +8,10 @@ resource "aws_cloudwatch_log_group" "eks_cluster_cwlg" {
   tags = {
     Environment = "dev"
     Name        = "${var.project_name}-logs"
+  }
 }
 
+# EKS Cluster
 resource "aws_eks_cluster" "pb_eks_cluster" {
   name     = "${var.project_name}-cluster"
   role_arn = aws_iam_role.pb_eks_role.arn
@@ -27,7 +32,7 @@ resource "aws_eks_cluster" "pb_eks_cluster" {
   ]
 
   depends_on = [
-    aws_iam_role_policy_attachment.pb_eks_AmazonEKSClusterPolicy
+    aws_iam_role_policy_attachment.pb_eks_AmazonEKSClusterPolicy,
     aws_cloudwatch_log_group.eks_cluster_cwlg
   ]
 
@@ -36,6 +41,7 @@ resource "aws_eks_cluster" "pb_eks_cluster" {
   }
 }
 
+# IAM Role for EKS Cluster
 resource "aws_iam_role" "pb_eks_role" {
   name = "${var.project_name}-eks-role"
 
@@ -53,11 +59,13 @@ resource "aws_iam_role" "pb_eks_role" {
   })
 }
 
+# Attach EKS Cluster Policy
 resource "aws_iam_role_policy_attachment" "pb_eks_AmazonEKSClusterPolicy" {
   role       = aws_iam_role.pb_eks_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSClusterPolicy"
 }
 
+# EKS Node Group
 resource "aws_eks_node_group" "pb_eks_node_group" {
   cluster_name    = aws_eks_cluster.pb_eks_cluster.name
   node_group_name = "${var.project_name}-node-group"
@@ -75,6 +83,7 @@ resource "aws_eks_node_group" "pb_eks_node_group" {
   }
 
   instance_types = var.instance_type
+  
   depends_on = [
     aws_iam_role_policy_attachment.pb_eks_AmazonEKSWorkerNodePolicy,
     aws_iam_role_policy_attachment.pb_eks_AmazonEKS_CNI_Policy,
@@ -86,6 +95,7 @@ resource "aws_eks_node_group" "pb_eks_node_group" {
   }
 }
 
+# IAM Role for EKS Node Group
 resource "aws_iam_role" "pb_eks_node_role" {
   name = "${var.project_name}-eks-node-role"
 
@@ -103,6 +113,7 @@ resource "aws_iam_role" "pb_eks_node_role" {
   })
 }
 
+# Node Group Policy Attachments
 resource "aws_iam_role_policy_attachment" "pb_eks_AmazonEKSWorkerNodePolicy" {
   role       = aws_iam_role.pb_eks_node_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
@@ -118,11 +129,12 @@ resource "aws_iam_role_policy_attachment" "pb_eks_AmazonEC2ContainerRegistryRead
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
-# Create OIDC provider for the EKS cluster
+# OIDC Provider Data
 data "tls_certificate" "eks_oidc" {
   url = aws_eks_cluster.pb_eks_cluster.identity[0].oidc[0].issuer
 }
 
+# OIDC Provider
 resource "aws_iam_openid_connect_provider" "eks_oidc" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = [data.tls_certificate.eks_oidc.certificates[0].sha1_fingerprint]
@@ -133,7 +145,7 @@ resource "aws_iam_openid_connect_provider" "eks_oidc" {
   }
 }
 
-# Extract OIDC provider ID from the URL
+# Local Variables
 locals {
   oidc_provider_arn = aws_iam_openid_connect_provider.eks_oidc.arn
   oidc_provider_id  = element(
@@ -142,9 +154,9 @@ locals {
   )
 }
 
-# IAM role for EBS CSI Driver
+# IAM Role for EBS CSI Driver
 resource "aws_iam_role" "ebs_csi_driver_role" {
-  name = "AmazonEKS_EBS_CSI_DriverRole"
+  name = "${var.project_name}-ebs-csi-driver-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -170,7 +182,7 @@ resource "aws_iam_role" "ebs_csi_driver_role" {
   }
 }
 
-# Attach AWS managed policy for EBS CSI Driver
+# Attach EBS CSI Driver Policy
 resource "aws_iam_role_policy_attachment" "ebs_csi_driver_policy" {
   role       = aws_iam_role.ebs_csi_driver_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
@@ -191,5 +203,3 @@ resource "aws_eks_addon" "ebs_csi_driver" {
     Name = "${var.project_name}-ebs-csi-driver"
   }
 }
-
-#
