@@ -94,10 +94,10 @@ jobs:
       - name: Terraform init
         id: init
         run: terraform init -backend-config="bucket=$S3_BUCKET"
-        
+
       - name: Terraform apply
         id: apply
-        run: terraform apply --auto-approve -input=false -parallelism=1 planfile
+        run: terraform apply --auto-approve -input=false
 
   destroy:
     name: "Destroy Infra with Terraform on AWS"

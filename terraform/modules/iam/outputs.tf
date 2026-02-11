@@ -6,11 +6,9 @@ output "iam_username" {
 output "secret_key" {
   description = "The secret access key for the IAM user"
   value       = aws_iam_access_key.credentials.secret
-  sensitive   = true
 }
 
 output "access_key_id" {
   description = "The access key ID for the IAM user"
   value       = aws_iam_access_key.credentials.id
-  sensitive   = true
 }
