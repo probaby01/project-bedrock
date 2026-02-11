@@ -19,7 +19,7 @@ resource "aws_iam_policy" "iam_put_bucket" {
           "s3:PutObject",
           "s3:PutObjectAcl"
         ]
-        Resource = "${aws_s3_bucket.pb_s3.arn}/*"
+        Resource = "${var.s3_bucket_arn}/*"
       }
     ]
   })

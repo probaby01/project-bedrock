@@ -10,7 +10,7 @@ output "eks_cluster_endpoint" {
 
 output "cluster_ca" {
   description = "Base64 encoded certificate authority data for the EKS cluster"
-  value = aws_eks_cluster.retail_eks.certificate_authority[0].data
+  value = aws_eks_cluster.pb_eks_cluster.certificate_authority[0].data
 }
 
 output "oidc_provider_arn" {

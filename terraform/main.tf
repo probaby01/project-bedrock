@@ -67,6 +67,8 @@ module "monitoring" {
 module "iam" {
   source = "./modules/iam"
 
+  s3_bucket_arn = module.storage.s3_bucket_arn
+
 }
 
 module "storage" {
