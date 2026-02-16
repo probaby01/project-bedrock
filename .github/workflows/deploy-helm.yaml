@@ -99,4 +99,5 @@ jobs:
         run: |
           kubectl get all -n ${{ env.NAMESPACE }}
           helm list -n ${{ env.NAMESPACE }}
+          #
      

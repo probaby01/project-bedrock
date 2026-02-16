@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+  namespace: retail
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      containers:
+      - name: cart
+        image: public.ecr.aws/aws-containers/retail-store-cart:latest
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart
+  namespace: retail
+spec:
+  type: ClusterIP  # internal service
+  selector:
+    app: cart
+  ports:
+  - port: 80
+    targetPort: 80
