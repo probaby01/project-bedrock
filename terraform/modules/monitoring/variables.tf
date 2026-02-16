@@ -8,12 +8,12 @@ variable "cluster_name" {
   type        = string
 }
 
-variable "oidc_provider_arn" {
-  description = "ARN of the EKS OIDC provider"
+variable "oidc_issuer_url" {
+  description = "OIDC issuer URL from EKS"
   type        = string
 }
 
-variable "oidc_provider_url" {
-  description = "URL of the EKS OIDC provider"
+variable "oidc_thumbprint" {
+  description = "OIDC thumbprint for EKS"
   type        = string
 }

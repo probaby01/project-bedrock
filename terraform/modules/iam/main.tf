@@ -1,5 +1,5 @@
 resource "aws_iam_user" "iam_user" {
-  name = "bedrock-dev-view"
+  name = "terraform-user"
 }
 
 resource "aws_iam_user_policy_attachment" "readonly" {
@@ -9,7 +9,7 @@ resource "aws_iam_user_policy_attachment" "readonly" {
 
 resource "aws_iam_policy" "iam_put_bucket" {
   name        = "bedrock-assets-upload-policy"
-  description = "Allow IAM user to upload objects to bedrock-assets-1570"
+  description = "Allow IAM user to upload objects to bedrock-assets-1174"
   policy      = jsonencode({
     Version = "2012-10-17"
     Statement = [
@@ -40,19 +40,18 @@ resource "aws_iam_user_login_profile" "credentials" {
   password_reset_required = false
 }
 
-resource "kubernetes_config_map" "aws_auth" {
-  metadata {
-    name      = "aws-auth"
-    namespace = "kube-system"
-  }
+#resource "kubernetes_config_map" "aws_auth" {
+ #  name      = "aws-auth"
+  #  namespace = "kube-system"
+  #}
 
-  data = {
-    mapUsers = yamlencode([
-      {
-        userarn  = aws_iam_user.iam_user.arn
-        username = "bedrock-dev-view"
-        groups   = ["view"]  
-      }
-    ])
-  }
-}
+  #data = {
+   # mapUsers = yamlencode([
+    #  {
+     #   userarn  = aws_iam_user.iam_user.arn
+      #  username = "bedrock-assets-1174"
+       # groups   = ["view"]  
+      #}
+    #])
+  #}
+#}

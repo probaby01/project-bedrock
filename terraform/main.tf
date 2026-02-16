@@ -1,47 +1,48 @@
 terraform {
-  required_version = ">= 1.0.0"
-
-  backend "s3" {
-    bucket       = "project-bedrock-state-bucket-1570"
-    key          = "project-bedrock/terraform.tfstate"
-    region       = "us-east-1"
-    encrypt      = true
-    # use_lockfile = true
-  }
-
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "6.28.0"
+      version = ">= 5.0"
     }
+
     kubernetes = {
       source  = "hashicorp/kubernetes"
-      version = "~> 2.3"
+      version = ">= 2.0"
     }
+
     helm = {
       source  = "hashicorp/helm"
-      version = "~> 2.16"
+      version = ">= 2.0"
     }
   }
-}
+
+  backend "s3" {
+    bucket = "bedrock-tf-state-abdul"
+    key    = "terraform.tfstate"
+    region = "us-east-1"  # Fixed to match actual bucket location
+  }
+}  # <-- This closing brace is missing
 
 provider "aws" {
   region = var.aws_region
 }
 
-# provider "kubernetes" {
-#   host                   = module.eks.eks_cluster_endpoint
-#   cluster_ca_certificate = base64decode(module.eks.cluster_ca)
-# }
-
-module "networking" {
-  source = "./modules/networking"
-
-  project_name = var.project_name
-  cidr_block   = var.cidr_block
-
+data "aws_eks_cluster_auth" "eks" {
+  name = module.eks.cluster_name
 }
 
+provider "kubernetes" {
+}
+
+
+provider "helm" {
+}
+module "networking" {
+  source = "./modules/networking"
+  
+  project_name = "project-bedrock"
+  cidr_block   = "10.0.0.0/16"
+}
 module "eks" {
   source = "./modules/eks"
 
@@ -50,25 +51,21 @@ module "eks" {
   public_subnet_ids  = module.networking.pb_public_subnet_ids
   private_subnet_ids = module.networking.pb_private_subnet_ids
   instance_type      = var.instance_type
-
 }
 
 module "monitoring" {
   source = "./modules/monitoring"
-  
-  project_name       = var.project_name
-  cluster_name       = module.eks.eks_cluster_name
-  oidc_provider_arn  = module.eks.oidc_provider_arn
-  oidc_provider_url  = module.eks.cluster_oidc_issuer_url
-  
-  depends_on = [module.eks]
+
+  project_name    = var.project_name
+  cluster_name    = module.eks.cluster_name
+  oidc_issuer_url = module.eks.cluster_oidc_issuer_url
+  oidc_thumbprint = module.eks.cluster_oidc_thumbprint
 }
 
 module "iam" {
   source = "./modules/iam"
 
   s3_bucket_arn = module.storage.s3_bucket_arn
-
 }
 
 module "storage" {
@@ -76,4 +73,5 @@ module "storage" {
 
   project_name = var.project_name
 }
+
 

@@ -5,12 +5,13 @@ output "vpc_name" {
 
 output "eks_cluster_name" {
   description = "Name of the EKS cluster"
-  value       = module.eks.eks_cluster_name
+  value       = module.eks.cluster_name
 }
 
 output "eks_cluster_endpoint" {
   description = "EKS API server endpoint"
-  value       = module.eks.eks_cluster_endpoint
+  value       =module.eks.cluster_endpoint
+
 }
 
 output "iam_username" {
@@ -38,4 +39,18 @@ output "s3_bucket_name" {
 output "lambda_function_name" {
   description = "Name of the Lambda function for asset processing"
   value       = module.storage.lambda_function_name
+}
+
+
+
+output "eks_cluster_certificate_authority_data" {
+  value = module.eks.cluster_certificate_authority_data
+}
+
+output "eks_cluster_oidc_issuer_url" {
+  value = module.eks.cluster_oidc_issuer_url
+}
+
+output "eks_cluster_oidc_thumbprint" {
+  value = module.eks.cluster_oidc_thumbprint
 }

@@ -1,0 +1,75 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.0"
+    }
+
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = ">= 2.0"
+    }
+
+    helm = {
+      source  = "hashicorp/helm"
+      version = ">= 2.0"
+    }
+  }
+
+  backend "s3" {
+    bucket = "bedrock-tf-state-abdul"
+    key    = "terraform.tfstate"
+    region = "us-east-1"  # Fixed to match actual bucket location
+  }
+}  # <-- This closing brace is missing
+
+provider "aws" {
+  region = var.aws_region
+}
+
+data "aws_eks_cluster_auth" "eks" {
+  name = module.eks.cluster_name
+}
+
+provider "kubernetes" {
+  host                   = module.eks.cluster_endpoint
+  cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
+  token                  = data.aws_eks_cluster_auth.eks.token
+}
+
+
+provider "helm" {
+}
+
+module "eks" {
+  source = "./modules/eks"
+
+  project_name       = var.project_name
+  pb_sg_id           = module.networking.pb_sg_id
+  public_subnet_ids  = module.networking.pb_public_subnet_ids
+  private_subnet_ids = module.networking.pb_private_subnet_ids
+  instance_type      = var.instance_type
+}
+
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  project_name    = var.project_name
+  cluster_name    = module.eks.cluster_name
+  oidc_issuer_url = module.eks.cluster_oidc_issuer_url
+  oidc_thumbprint = module.eks.cluster_oidc_thumbprint
+}
+
+module "iam" {
+  source = "./modules/iam"
+
+  s3_bucket_arn = module.storage.s3_bucket_arn
+}
+
+module "storage" {
+  source = "./modules/storage"
+
+  project_name = var.project_name
+}
+
+

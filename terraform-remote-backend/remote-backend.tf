@@ -14,7 +14,7 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "pb_terraform_state" {
-  bucket = "${var.project_name}-state-bucket-1570"
+  bucket = "${var.project_name}-state-bucket-1174"
 
   # Prevent accidental deletion of this S3 bucket
   # Comment-out when you want to destroy resources

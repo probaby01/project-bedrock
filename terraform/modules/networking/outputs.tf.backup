@@ -1,0 +1,24 @@
+output "pb_vpc_id" {
+  description = "The ID of the VPC"
+  value       = aws_vpc.pb_vpc.id
+}
+
+output "pb_vpc_name" {
+  description = "The name of the VPC"
+  value       = aws_vpc.pb_vpc.tags["Name"]
+}
+
+output "pb_sg_id" {
+  description = "The ID of the security group"
+  value       = aws_security_group.pb_sg.id
+}
+
+output "pb_private_subnet_ids" {
+  description = "List of private subnet IDs"
+  value       = aws_subnet.pb_private_subnet[*].id
+}
+
+output "pb_public_subnet_ids" {
+  description = "List of public subnet IDs"
+  value       = aws_subnet.pb_public_subnet[*].id
+}

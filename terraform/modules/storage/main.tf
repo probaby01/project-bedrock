@@ -1,8 +1,8 @@
 resource "aws_s3_bucket" "pb_s3" {
-  bucket = "bedrock-assets-1570"
+  bucket = "bedrock-assets-1174"
 
   tags = {
-    Name = "bedrock-assets-1570"
+    Name = "bedrock-assets-1174"
   }
 }
 
