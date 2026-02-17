@@ -20,31 +20,31 @@ echo ""
 echo "========================================="
 echo "Deploying MySQL..."
 echo "========================================="
-helm upgrade --install mysql ./mysql -n retail-app --wait --timeout 5m
+helm upgrade --install mysql ./mysql -n retail-app --wait --timeout 10m
 
 echo ""
 echo "========================================="
 echo "Deploying PostgreSQL..."
 echo "========================================="
-helm upgrade --install postgresql ./postgresql -n retail-app --wait --timeout 5m
+helm upgrade --install postgresql ./postgresql -n retail-app --wait --timeout 10m
 
 echo ""
 echo "========================================="
 echo "Deploying Redis..."
 echo "========================================="
-helm upgrade --install redis ./redis -n retail-app --wait --timeout 5m
+helm upgrade --install redis ./redis -n retail-app --wait --timeout 10m
 
 echo ""
 echo "========================================="
 echo "Deploying DynamoDB..."
 echo "========================================="
-helm upgrade --install dynamodb ./dynamodb -n retail-app --wait --timeout 5m
+helm upgrade --install dynamodb ./dynamodb -n retail-app --wait --timeout 10m
 
 echo ""
 echo "========================================="
 echo "Deploying RabbitMQ..."
 echo "========================================="
-helm upgrade --install rabbitmq ./rabbitmq -n retail-app --wait --timeout 5m
+helm upgrade --install rabbitmq ./rabbitmq -n retail-app --wait --timeout 10m
 
 echo ""
 echo "========================================="
@@ -55,7 +55,7 @@ helm upgrade --install frontend \
   --version 1.4.0 \
   --namespace retail-app \
   -f ./ms-values/frontend-values.yaml \
-  --wait --timeout 5m
+  --wait --timeout 10m
 
 echo ""
 echo "========================================="
@@ -66,7 +66,7 @@ helm upgrade --install catalog \
   --version 1.4.0 \
   --namespace retail-app \
   -f ./ms-values/catalog-values.yaml \
-  --wait --timeout 5m
+  --wait --timeout 10m
 
 echo ""
 echo "========================================="
@@ -77,7 +77,7 @@ helm upgrade --install cart \
   --version 1.4.0 \
   --namespace retail-app \
   -f ./ms-values/cart-values.yaml \
-  --wait --timeout 5m
+  --wait --timeout 10m
 
 echo ""
 echo "========================================="
@@ -88,7 +88,7 @@ helm upgrade --install orders \
   --version 1.4.0 \
   --namespace retail-app \
   -f ./ms-values/orders-values.yaml \
-  --wait --timeout 5m
+  --wait --timeout 10m
 
 echo ""
 echo "========================================="
@@ -99,13 +99,7 @@ helm upgrade --install checkout \
   --version 1.4.0 \
   --namespace retail-app \
   -f ./ms-values/checkout-values.yaml \
-  --wait --timeout 5m
-
-echo ""
-echo "========================================="
-echo "Waiting for all pods to stabilize..."
-echo "========================================="
-sleep 60
+  --wait --timeout 10m
 
 echo ""
 echo "========================================="
