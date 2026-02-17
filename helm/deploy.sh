@@ -6,7 +6,6 @@ echo "========================================="
 echo "Starting deployment to retail-app namespace"
 echo "========================================="
 
-# Authenticate with EKS cluster
 echo "Authenticating with EKS cluster..."
 aws eks update-kubeconfig --name $EKS_CLUSTER_NAME --region $AWS_REGION
 
@@ -16,83 +15,96 @@ kubectl get nodes
 echo "Logging into Public ECR..."
 aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 
-# Helper function to deploy helm chart
-deploy_chart() {
-  RELEASE_NAME=$1
-  CHART=$2
-  shift 2
-  EXTRA_ARGS="$@"
+echo ""
+echo "========================================="
+echo "Deploying Infrastructure..."
+echo "========================================="
 
-  echo ""
-  echo "========================================="
-  echo "Deploying $RELEASE_NAME..."
-  echo "========================================="
+helm upgrade --install mysql ./mysql -n retail-app
+echo "✅ MySQL submitted"
 
-  # If release is in failed state, uninstall first
-  STATUS=$(helm status $RELEASE_NAME -n retail-app 2>/dev/null | grep STATUS | awk '{print $2}' || echo "not-found")
-  if [ "$STATUS" = "failed" ]; then
-    echo "Release $RELEASE_NAME is in failed state. Uninstalling first..."
-    helm uninstall $RELEASE_NAME -n retail-app
-    sleep 5
-  fi
+helm upgrade --install postgresql ./postgresql -n retail-app
+echo "✅ PostgreSQL submitted"
 
-  helm upgrade --install $RELEASE_NAME $CHART \
-    -n retail-app \
-    --wait \
-    --timeout 10m \
-    $EXTRA_ARGS
-}
+helm upgrade --install redis ./redis -n retail-app
+echo "✅ Redis submitted"
 
-# Deploy infrastructure charts
-deploy_chart mysql ./mysql
-deploy_chart postgresql ./postgresql
-deploy_chart redis ./redis
-deploy_chart dynamodb ./dynamodb
-deploy_chart rabbitmq ./rabbitmq
+helm upgrade --install dynamodb ./dynamodb -n retail-app
+echo "✅ DynamoDB submitted"
 
-# Deploy microservices
-deploy_chart frontend \
+helm upgrade --install rabbitmq ./rabbitmq -n retail-app
+echo "✅ RabbitMQ submitted"
+
+echo ""
+echo "========================================="
+echo "Waiting for infrastructure to be Ready..."
+echo "========================================="
+sleep 30
+
+kubectl wait --for=condition=ready pod -l app=mysql -n retail-app --timeout=300s
+echo "✅ MySQL Ready"
+
+kubectl wait --for=condition=ready pod -l app=postgresql -n retail-app --timeout=300s
+echo "✅ PostgreSQL Ready"
+
+kubectl wait --for=condition=ready pod -l app=redis -n retail-app --timeout=300s
+echo "✅ Redis Ready"
+
+echo ""
+echo "========================================="
+echo "Deploying Microservices..."
+echo "========================================="
+
+helm upgrade --install frontend \
   oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart \
   --version 1.4.0 \
-  -f ./ms-values/frontend-values.yaml
+  --namespace retail-app \
+  -f ./ms-values/frontend-values.yaml \
+  --wait --timeout 10m
+echo "✅ Frontend deployed"
 
-deploy_chart catalog \
+helm upgrade --install catalog \
   oci://public.ecr.aws/aws-containers/retail-store-sample-catalog-chart \
   --version 1.4.0 \
-  -f ./ms-values/catalog-values.yaml
+  --namespace retail-app \
+  -f ./ms-values/catalog-values.yaml \
+  --wait --timeout 10m
+echo "✅ Catalog deployed"
 
-deploy_chart cart \
+helm upgrade --install cart \
   oci://public.ecr.aws/aws-containers/retail-store-sample-cart-chart \
   --version 1.4.0 \
-  -f ./ms-values/cart-values.yaml
+  --namespace retail-app \
+  -f ./ms-values/cart-values.yaml \
+  --wait --timeout 10m
+echo "✅ Cart deployed"
 
-deploy_chart orders \
+helm upgrade --install orders \
   oci://public.ecr.aws/aws-containers/retail-store-sample-orders-chart \
   --version 1.4.0 \
-  -f ./ms-values/orders-values.yaml
+  --namespace retail-app \
+  -f ./ms-values/orders-values.yaml \
+  --wait --timeout 10m
+echo "✅ Orders deployed"
 
-deploy_chart checkout \
+helm upgrade --install checkout \
   oci://public.ecr.aws/aws-containers/retail-store-sample-checkout-chart \
   --version 1.4.0 \
-  -f ./ms-values/checkout-values.yaml
+  --namespace retail-app \
+  -f ./ms-values/checkout-values.yaml \
+  --wait --timeout 10m
+echo "✅ Checkout deployed"
 
 echo ""
 echo "========================================="
 echo "Deployment Status Summary"
 echo "========================================="
-echo "Pods:"
 kubectl get pods -n retail-app
-
 echo ""
-echo "PVCs:"
 kubectl get pvc -n retail-app
-
 echo ""
-echo "Services:"
 kubectl get svc -n retail-app
-
 echo ""
-echo "Helm Releases:"
 helm list -n retail-app
 
 echo ""
