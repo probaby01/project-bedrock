@@ -16,90 +16,65 @@ kubectl get nodes
 echo "Logging into Public ECR..."
 aws ecr-public get-login-password --region us-east-1 | helm registry login --username AWS --password-stdin public.ecr.aws
 
-echo ""
-echo "========================================="
-echo "Deploying MySQL..."
-echo "========================================="
-helm upgrade --install mysql ./mysql -n retail-app --wait --timeout 10m
+# Helper function to deploy helm chart
+deploy_chart() {
+  RELEASE_NAME=$1
+  CHART=$2
+  shift 2
+  EXTRA_ARGS="$@"
 
-echo ""
-echo "========================================="
-echo "Deploying PostgreSQL..."
-echo "========================================="
-helm upgrade --install postgresql ./postgresql -n retail-app --wait --timeout 10m
+  echo ""
+  echo "========================================="
+  echo "Deploying $RELEASE_NAME..."
+  echo "========================================="
 
-echo ""
-echo "========================================="
-echo "Deploying Redis..."
-echo "========================================="
-helm upgrade --install redis ./redis -n retail-app --wait --timeout 10m
+  # If release is in failed state, uninstall first
+  STATUS=$(helm status $RELEASE_NAME -n retail-app 2>/dev/null | grep STATUS | awk '{print $2}' || echo "not-found")
+  if [ "$STATUS" = "failed" ]; then
+    echo "Release $RELEASE_NAME is in failed state. Uninstalling first..."
+    helm uninstall $RELEASE_NAME -n retail-app
+    sleep 5
+  fi
 
-echo ""
-echo "========================================="
-echo "Deploying DynamoDB..."
-echo "========================================="
-helm upgrade --install dynamodb ./dynamodb -n retail-app --wait --timeout 10m
+  helm upgrade --install $RELEASE_NAME $CHART \
+    -n retail-app \
+    --wait \
+    --timeout 10m \
+    $EXTRA_ARGS
+}
 
-echo ""
-echo "========================================="
-echo "Deploying RabbitMQ..."
-echo "========================================="
-helm upgrade --install rabbitmq ./rabbitmq -n retail-app --wait --timeout 10m
+# Deploy infrastructure charts
+deploy_chart mysql ./mysql
+deploy_chart postgresql ./postgresql
+deploy_chart redis ./redis
+deploy_chart dynamodb ./dynamodb
+deploy_chart rabbitmq ./rabbitmq
 
-echo ""
-echo "========================================="
-echo "Deploying Frontend Microservice..."
-echo "========================================="
-helm upgrade --install frontend \
+# Deploy microservices
+deploy_chart frontend \
   oci://public.ecr.aws/aws-containers/retail-store-sample-ui-chart \
   --version 1.4.0 \
-  --namespace retail-app \
-  -f ./ms-values/frontend-values.yaml \
-  --wait --timeout 10m
+  -f ./ms-values/frontend-values.yaml
 
-echo ""
-echo "========================================="
-echo "Deploying Catalog Microservice..."
-echo "========================================="
-helm upgrade --install catalog \
+deploy_chart catalog \
   oci://public.ecr.aws/aws-containers/retail-store-sample-catalog-chart \
   --version 1.4.0 \
-  --namespace retail-app \
-  -f ./ms-values/catalog-values.yaml \
-  --wait --timeout 10m
+  -f ./ms-values/catalog-values.yaml
 
-echo ""
-echo "========================================="
-echo "Deploying Cart Microservice..."
-echo "========================================="
-helm upgrade --install cart \
+deploy_chart cart \
   oci://public.ecr.aws/aws-containers/retail-store-sample-cart-chart \
   --version 1.4.0 \
-  --namespace retail-app \
-  -f ./ms-values/cart-values.yaml \
-  --wait --timeout 10m
+  -f ./ms-values/cart-values.yaml
 
-echo ""
-echo "========================================="
-echo "Deploying Orders Microservice..."
-echo "========================================="
-helm upgrade --install orders \
+deploy_chart orders \
   oci://public.ecr.aws/aws-containers/retail-store-sample-orders-chart \
   --version 1.4.0 \
-  --namespace retail-app \
-  -f ./ms-values/orders-values.yaml \
-  --wait --timeout 10m
+  -f ./ms-values/orders-values.yaml
 
-echo ""
-echo "========================================="
-echo "Deploying Checkout Microservice..."
-echo "========================================="
-helm upgrade --install checkout \
+deploy_chart checkout \
   oci://public.ecr.aws/aws-containers/retail-store-sample-checkout-chart \
   --version 1.4.0 \
-  --namespace retail-app \
-  -f ./ms-values/checkout-values.yaml \
-  --wait --timeout 10m
+  -f ./ms-values/checkout-values.yaml
 
 echo ""
 echo "========================================="
