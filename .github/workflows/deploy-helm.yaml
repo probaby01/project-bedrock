@@ -55,10 +55,11 @@ jobs:
           --username AWS \
           --password-stdin public.ecr.aws
  
-      - name: Deploy charts
-          run: ./helm/deploy.sh
-            
+      - name: Make deploy script executable
+        run: chmod +x ./helm/deploy.sh
 
+      - name: Deploy charts
+        run: ./helm/deploy.sh
 
       # - name: Deploy Frontend
       #   run: |
@@ -104,5 +105,3 @@ jobs:
       #   run: |
       #     kubectl get all -n ${{ env.NAMESPACE }}
       #     helm list -n ${{ env.NAMESPACE }}
-      #     
-     
